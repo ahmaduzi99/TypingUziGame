@@ -1,0 +1,135 @@
+﻿@page "/"
+@using TypingUziGame.Models
+<style> 
+    .game-text {
+        font-size : 72px;
+        font-weight: bold;
+        margin-right :4px;
+
+    }
+
+    .correct {
+        color : green;
+    }
+
+    .wrong {
+        color: red;
+    }
+</style>
+
+<div @ref="parentDiv" @onkeydown="onType" tabindex="0">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    @for (var ch=0;ch<generatedChar.Length;ch++)
+                    {
+                        <span class="game-text @status[ch]">
+                            @generatedChar[ch]
+                        </span>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <span>Correct : @stats.Correct</span>
+                    <span>Missed : @stats.Missed</span>
+                    <span>Total : @stats.Total</span>
+                    <span>Accuaracy : @stats.Accuracy %</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    string alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM";  //untuk menambah data berupa string dalam permaianan
+    char[] generatedChar = new char[7]; // untuk menggenerate agar menampilkan 7 core
+    string[] status = new string[7]; // untuk row apabila salah akan terlihat
+
+
+
+    Random random = new Random(); // fungsi random untuk merandom sebuah angka agar acak
+
+    Stats stats;  // untuk memanggil di class stats 
+
+    public ElementReference parentDiv;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) //setap kali merender fokus ke div induk 
+    {                                                                   // fungsi async adalah kodingan tidak saling menunggu
+        if (firstRender)
+        {
+            await parentDiv.FocusAsync();  //untuk memfokuskan ke div parent
+        }
+
+    }
+
+    private void SetUpGame()   //untuk memuat ulang sebuah game 
+    {
+        stats = new Stats();  // untuk mengecek berapa score
+        stats.Correct = 0;  // yang benar
+        stats.Missed = 0; //yang salah
+        stats.Total = 0;  // total semua
+        stats.Accuracy = 0; //status
+        generateChar();
+
+    }
+
+    protected override void OnInitialized()  //akses modifier
+    {
+        SetUpGame();
+    }
+
+    int cursor = 0;
+
+
+    public void onType(KeyboardEventArgs e)  // ketika event method di klik 
+    {
+        if(e.Key == generatedChar[cursor].ToString().ToLower())   // kondisi ketika di klik di connvert ke string dan merubah menjadi huruf kecil
+        {
+            stats.Correct++;          //jika kondisi benar maka score benar ++ , status jadi correct dan cursor maju
+            status[cursor]="correct";
+            cursor++;
+        }
+        else
+        {
+            stats.Missed++;                      //jika kondisi salah maka missed nambah status menjadi wrong  
+            status[cursor]="wrong";
+        }
+
+        if (cursor >= 7)
+        {
+            status = new string[7];      // jika cursor lebih dari 7 maka huruf random akan mereset
+            cursor = 0;
+            generateChar();
+        }
+
+        if (stats.Missed >= 5)
+        {
+            SetUpGame();                 //jika yang salah lebih dari 5 maka game akan mereset
+            status = new string[7];
+            cursor = 0;
+
+
+        }
+
+        stats.countTotal();
+        stats.CountAccuracy();
+    }
+
+    public void generateChar()  //untuk mengulang huruf random 
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            generatedChar[i] = alphabet[random.Next(alphabet.Length)];
+        }
+    }
+}
